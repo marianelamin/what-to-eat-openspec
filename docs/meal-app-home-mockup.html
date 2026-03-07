@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Planning App - All Screens (Golden Amber)</title>
+    <style>
+        :root {
+            /* Light theme (default) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f5f5f5;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --border-color: #e5e7eb;
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --gradient-start: #f59e0b;
+            --gradient-end: #d97706;
+            --accent-light: #fef3c7;
+            --accent-text: #d97706;
+            --profile-highlight: #fef3c7;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #0f172a;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --text-tertiary: #9ca3af;
+            --border-color: #374151;
+            --card-bg: #1f2937;
+            --input-bg: #374151;
+            --gradient-start: #f59e0b;
+            --gradient-end: #d97706;
+            --accent-light: #292524;
+            --accent-text: #fbbf24;
+            --profile-highlight: #292524;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-tertiary);
+            padding: 40px 20px;
+        }
+
+        .theme-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .theme-btn:hover {
+            background: var(--accent-light);
+            color: var(--accent-text);
+        }
+
+        .theme-btn.active {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            color: #ffffff;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            font-size: 32px;
+        }
+
+        .subtitle-text {
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .screens-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(390px, 1fr));
+            gap: 40px;
+        }
+
+        .screen-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen-label {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .phone-container {
+            width: 390px;
+            height: 844px;
+            background: var(--bg-primary);
+            border-radius: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: 44px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* App Content */
+        .app-content {
+            height: calc(844px - 44px - 80px);
+            overflow-y: auto;
+            background: var(--bg-primary);
+        }
+
+        .app-content::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+        }
+
+        /* Header */
+        .header {
+            padding: 32px 24px 24px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #ffffff;
+        }
+
+        .header h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .header-simple {
+            padding: 32px 24px 24px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #ffffff;
+        }
+
+        .header-simple h2 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        /* Section */
+        .section {
+            padding: 24px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        /* Meal Cards */
+        .meal-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .meal-image {
+            width: 100%;
+            height: 160px;
+            background: linear-gradient(135deg, #e8ecf4 0%, #f5f7fa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .meal-info {
+            padding: 16px;
+        }
+
+        .meal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .meal-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            background: var(--accent-light);
+            color: var(--accent-text);
+            margin-bottom: 8px;
+        }
+
+        .meal-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .meal-action {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Catalog Grid */
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .catalog-item {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .catalog-image {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, #e8ecf4 0%, #f5f7fa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .catalog-info {
+            padding: 12px;
+        }
+
+        .catalog-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .catalog-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            padding: 16px 24px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .filter-chip {
+            padding: 8px 16px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .filter-chip.active {
+            background: var(--accent-light);
+            border-color: var(--gradient-start);
+            color: var(--accent-text);
+        }
+
+        /* Inventory Items */
+        .inventory-section {
+            padding: 0 24px 24px;
+        }
+
+        .inventory-category {
+            margin-bottom: 24px;
+        }
+
+        .category-header {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-count {
+            font-size: 14px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+
+        .inventory-item {
+            display: flex;
+            align-items: stretch;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .inventory-item.normal {
+            padding: 12px 16px;
+        }
+
+        .inventory-item.swiped {
+            padding: 0;
+        }
+
+        .item-content {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .item-name {
+            font-size: 15px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .item-quantity {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .swipe-actions {
+            display: flex;
+            align-items: stretch;
+        }
+
+        .swipe-btn {
+            padding: 0 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 90px;
+            flex-shrink: 0;
+        }
+
+        .swipe-btn-edit {
+            background: #f59e0b;
+            color: #ffffff;
+        }
+
+        .swipe-btn-delete {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        /* Login Screen Styles */
+        .login-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px 32px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .login-logo-icon {
+            font-size: 80px;
+            margin-bottom: 16px;
+        }
+
+        .login-logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .login-tagline {
+            font-size: 16px;
+            color: #ffffff;
+            opacity: 0.9;
+            margin-top: 8px;
+        }
+
+        .login-form {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 32px 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            color: #1f2937;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #f59e0b;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .login-divider {
+            text-align: center;
+            margin: 24px 0;
+            color: #9ca3af;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .login-divider::before,
+        .login-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .login-divider::before {
+            left: 0;
+        }
+
+        .login-divider::after {
+            right: 0;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .signup-link a {
+            color: #f59e0b;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        /* Week Dots for History */
+        .week-dots-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .week-dots-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .week-dots-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .week-dots {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .day-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .day-dot.empty {
+            background: var(--border-color);
+            color: var(--text-tertiary);
+        }
+
+        .day-dot.filled {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            color: #ffffff;
+        }
+
+        .day-label {
+            font-size: 9px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            text-align: center;
+            margin-top: 6px;
+        }
+
+        .swipe-hint {
+            font-size: 12px;
+            color: #9ca3af;
+            text-align: center;
+            padding: 12px;
+            font-style: italic;
+        }
+
+        /* History Stats */
+        .stats-card {
+            background: #fef3c7;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stats-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .stat-bar {
+            height: 8px;
+            background: #ffffff;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 4px;
+        }
+
+        /* History Timeline */
+        .timeline {
+            padding: 0 24px 24px;
+        }
+
+        .timeline-date {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            margin-bottom: 12px;
+            margin-top: 20px;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .timeline-image {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #e8ecf4 0%, #f5f7fa 100%);
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        .timeline-info {
+            flex: 1;
+        }
+
+        .timeline-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .timeline-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Action Button */
+        .action-button {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+            cursor: pointer;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: 20px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            color: var(--text-tertiary);
+        }
+
+        .nav-item.active .nav-icon {
+            color: var(--gradient-start);
+        }
+
+        .nav-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+
+        .nav-item.active .nav-label {
+            color: var(--gradient-start);
+        }
+
+        /* Top Action Bar */
+        .top-actions {
+            padding: 16px 24px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        function setTheme(theme) {
+            const containers = document.querySelectorAll('.phone-container');
+            const buttons = document.querySelectorAll('.theme-btn');
+            
+            containers.forEach(container => {
+                if (theme === 'dark') {
+                    container.setAttribute('data-theme', 'dark');
+                } else {
+                    container.removeAttribute('data-theme');
+                }
+            });
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+    </script>
+</head>
+<body>
+    <div class="theme-selector">
+        <button class="theme-btn active" onclick="setTheme('light')">☀️ Light</button>
+        <button class="theme-btn" onclick="setTheme('dark')">🌙 Dark</button>
+    </div>
+    
+    <div class="container">
+        <h1>Meal Planning App - All Screens</h1>
+        <p class="subtitle-text">Golden Amber Theme</p>
+        
+        <div class="screens-grid">
+            <!-- Screen 0: Login -->
+            <div class="screen-wrapper">
+                <div class="screen-label">Login Screen</div>
+                <div class="phone-container">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>●●●●○</span>
+                    </div>
+
+                    <div class="app-content">
+                        <div class="login-container">
+                            <div class="login-logo">
+                                <div class="login-logo-icon">🍽️</div>
+                                <div class="login-logo-text">Meal Planner</div>
+                                <div class="login-tagline">Never wonder what to cook</div>
+                            </div>
+
+                            <div class="login-form">
+                                <div class="form-group">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-input" placeholder="you@example.com">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" class="form-input" placeholder="••••••••">
+                                </div>
+
+                                <button class="login-btn">Sign In</button>
+
+                                <div class="login-divider">or</div>
+
+                                <div class="signup-link">
+                                    Don't have an account? <a href="#">Sign up</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 1: Home / Recommendations -->
+            <div class="screen-wrapper">
+                <div class="screen-label">Home (Recommendations)</div>
+                <div class="phone-container">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>●●●●○</span>
+                    </div>
+
+                    <div class="app-content">
+                        <div class="header">
+                            <h2>What should you cook?</h2>
+                            <div class="subtitle">Dinner • Sunday evening</div>
+                        </div>
+
+                        <div class="section">
+                            <div class="meal-card">
+                                <div class="meal-image">[Your meal photo]</div>
+                                <div class="meal-info">
+                                    <div class="meal-title">Pulled Pork & Salad</div>
+                                    <div class="meal-tag">⏱ Quick (20 min)</div>
+                                    <div class="meal-meta">📦 Have most ingredients<br>📅 Last made: 8 days ago</div>
+                                    <button class="meal-action">Choose This Meal</button>
+                                </div>
+                            </div>
+
+                            <div class="meal-card">
+                                <div class="meal-image">[Your meal photo]</div>
+                                <div class="meal-info">
+                                    <div class="meal-title">Breakfast Plate</div>
+                                    <div class="meal-tag">⏱ Standard (30 min)</div>
+                                    <div class="meal-meta">📦 Have: eggs, bacon<br>📅 Last made: 5 days ago</div>
+                                    <button class="meal-action">Choose This Meal</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bottom-nav">
+                        <div class="nav-item active">
+                            <div class="nav-icon">⌂</div>
+                            <div class="nav-label">Home</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">☰</div>
+                            <div class="nav-label">Catalog</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">□</div>
+                            <div class="nav-label">Inventory</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">◐</div>
+                            <div class="nav-label">History</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">◯</div>
+                            <div class="nav-label">Profile</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 2: Catalog -->
+            <div class="screen-wrapper">
+                <div class="screen-label">Catalog (Browse Meals)</div>
+                <div class="phone-container">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>●●●●○</span>
+                    </div>
+
+                    <div class="app-content">
+                        <div class="header-simple">
+                            <h2>My Meals (15)</h2>
+                        </div>
+
+                        <div class="filter-bar">
+                            <div class="filter-chip active">All</div>
+                            <div class="filter-chip">Breakfast</div>
+                            <div class="filter-chip">Quick</div>
+                            <div class="filter-chip">Can Make</div>
+                        </div>
+
+                        <div class="section">
+                            <div class="catalog-grid">
+                                <div class="catalog-item">
+                                    <div class="catalog-image">[Photo]</div>
+                                    <div class="catalog-info">
+                                        <div class="catalog-title">Stir-Fry</div>
+                                        <div class="catalog-meta">⏱ 20min</div>
+                                    </div>
+                                </div>
+
+                                <div class="catalog-item">
+                                    <div class="catalog-image">[Photo]</div>
+                                    <div class="catalog-info">
+                                        <div class="catalog-title">Tacos</div>
+                                        <div class="catalog-meta">⏱ 30min</div>
+                                    </div>
+                                </div>
+
+                                <div class="catalog-item">
+                                    <div class="catalog-image">[Photo]</div>
+                                    <div class="catalog-info">
+                                        <div class="catalog-title">Salad Bowl</div>
+                                        <div class="catalog-meta">⏱ 15min</div>
+                                    </div>
+                                </div>
+
+                                <div class="catalog-item">
+                                    <div class="catalog-image">[Photo]</div>
+                                    <div class="catalog-info">
+                                        <div class="catalog-title">Pasta</div>
+                                        <div class="catalog-meta">⏱ 25min</div>
+                                    </div>
+                                </div>
+
+                                <div class="catalog-item">
+                                    <div class="catalog-image">[Photo]</div>
+                                    <div class="catalog-info">
+                                        <div class="catalog-title">Omelette</div>
+                                        <div class="catalog-meta">⏱ 10min</div>
+                                    </div>
+                                </div>
+
+                                <div class="catalog-item">
+                                    <div class="catalog-image">[Photo]</div>
+                                    <div class="catalog-info">
+                                        <div class="catalog-title">Soup</div>
+                                        <div class="catalog-meta">⏱ 45min</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="absolute bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center text-white text-2xl shadow-lg">+</button>
+
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">⌂</div>
+                            <div class="nav-label">Home</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">☰</div>
+                            <div class="nav-label">Catalog</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">□</div>
+                            <div class="nav-label">Inventory</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">◐</div>
+                            <div class="nav-label">History</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">◯</div>
+                            <div class="nav-label">Profile</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 3: Inventory -->
+            <div class="screen-wrapper">
+                <div class="screen-label">Inventory (My Fridge)</div>
+                <div class="phone-container">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>●●●●○</span>
+                    </div>
+
+                    <div class="app-content">
+                        <div class="header-simple">
+                            <h2>My Fridge</h2>
+                        </div>
+
+                        <div class="top-actions">
+                            <button class="action-btn">📷 Scan Receipt</button>
+                            <button class="action-btn">+ Add Item</button>
+                        </div>
+
+                        <div class="inventory-section">
+                            <div class="swipe-hint">← Swipe right on any item to edit or delete</div>
+                            
+                            <div class="inventory-category">
+                                <div class="category-header">
+                                    <span>Proteins</span>
+                                    <span class="item-count">4 items</span>
+                                </div>
+                                
+                                <!-- Normal state -->
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Chicken breast</span>
+                                        <span class="item-quantity">1 lb</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Swiped state example -->
+                                <div class="inventory-item swiped">
+                                    <div class="swipe-actions">
+                                        <button class="swipe-btn swipe-btn-edit">✎ Edit</button>
+                                        <button class="swipe-btn swipe-btn-delete">🗑 Delete</button>
+                                    </div>
+                                    <div class="item-content">
+                                        <div class="item-info">
+                                            <span class="item-name">Eggs</span>
+                                            <span class="item-quantity">8</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Ground beef</span>
+                                        <span class="item-quantity">1 lb</span>
+                                    </div>
+                                </div>
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Bacon</span>
+                                        <span class="item-quantity">1 pack</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="inventory-category">
+                                <div class="category-header">
+                                    <span>Vegetables</span>
+                                    <span class="item-count">6 items</span>
+                                </div>
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Broccoli</span>
+                                        <span class="item-quantity">1 head</span>
+                                    </div>
+                                </div>
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Carrots</span>
+                                        <span class="item-quantity">1 bag</span>
+                                    </div>
+                                </div>
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Lettuce</span>
+                                        <span class="item-quantity">1 head</span>
+                                    </div>
+                                </div>
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Tomatoes</span>
+                                        <span class="item-quantity">4</span>
+                                    </div>
+                                </div>
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Onions</span>
+                                        <span class="item-quantity">2</span>
+                                    </div>
+                                </div>
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Bell peppers</span>
+                                        <span class="item-quantity">3</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="inventory-category">
+                                <div class="category-header">
+                                    <span>Pantry</span>
+                                    <span class="item-count">8 items</span>
+                                </div>
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Rice</span>
+                                        <span class="item-quantity">Plenty</span>
+                                    </div>
+                                </div>
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Pasta</span>
+                                        <span class="item-quantity">2 boxes</span>
+                                    </div>
+                                </div>
+                                <div class="inventory-item normal">
+                                    <div class="item-info">
+                                        <span class="item-name">Olive oil</span>
+                                        <span class="item-quantity">1 bottle</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">⌂</div>
+                            <div class="nav-label">Home</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">☰</div>
+                            <div class="nav-label">Catalog</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">□</div>
+                            <div class="nav-label">Inventory</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">◐</div>
+                            <div class="nav-label">History</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">◯</div>
+                            <div class="nav-label">Profile</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 4: History -->
+            <div class="screen-wrapper">
+                <div class="screen-label">History (Meal Log)</div>
+                <div class="phone-container">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>●●●●○</span>
+                    </div>
+
+                    <div class="app-content">
+                        <div class="header-simple">
+                            <h2>Meal History</h2>
+                        </div>
+
+                        <div class="section">
+                            <div class="stats-card">
+                                <div class="stats-title">This Week's Balance</div>
+                                <div class="week-dots-container">
+                                    <div class="week-dots-row">
+                                        <div class="week-dots-label">Protein</div>
+                                        <div class="week-dots">
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">M</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">T</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">W</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">T</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">F</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">S</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot empty"></div>
+                                                <div class="day-label">S</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="week-dots-row">
+                                        <div class="week-dots-label">Vegetables</div>
+                                        <div class="week-dots">
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">M</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot empty"></div>
+                                                <div class="day-label">T</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">W</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">T</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">F</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot empty"></div>
+                                                <div class="day-label">S</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot empty"></div>
+                                                <div class="day-label">S</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="week-dots-row">
+                                        <div class="week-dots-label">Fruit</div>
+                                        <div class="week-dots">
+                                            <div>
+                                                <div class="day-dot empty"></div>
+                                                <div class="day-label">M</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">T</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">W</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot empty"></div>
+                                                <div class="day-label">T</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot empty"></div>
+                                                <div class="day-label">F</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">S</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot empty"></div>
+                                                <div class="day-label">S</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="week-dots-row">
+                                        <div class="week-dots-label">Grains</div>
+                                        <div class="week-dots">
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">M</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">T</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot empty"></div>
+                                                <div class="day-label">W</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">T</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">F</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot filled"></div>
+                                                <div class="day-label">S</div>
+                                            </div>
+                                            <div>
+                                                <div class="day-dot empty"></div>
+                                                <div class="day-label">S</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline">
+                            <div class="timeline-date">Today, Feb 25</div>
+                            <div class="timeline-item">
+                                <div class="timeline-image"></div>
+                                <div class="timeline-info">
+                                    <div class="timeline-title">Chicken Stir-Fry</div>
+                                    <div class="timeline-meta">Dinner • 7:30 PM</div>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-image"></div>
+                                <div class="timeline-info">
+                                    <div class="timeline-title">Avocado Toast</div>
+                                    <div class="timeline-meta">Breakfast • 8:00 AM</div>
+                                </div>
+                            </div>
+
+                            <div class="timeline-date">Yesterday, Feb 24</div>
+                            <div class="timeline-item">
+                                <div class="timeline-image"></div>
+                                <div class="timeline-info">
+                                    <div class="timeline-title">Beef Tacos</div>
+                                    <div class="timeline-meta">Dinner • 6:45 PM</div>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-image"></div>
+                                <div class="timeline-info">
+                                    <div class="timeline-title">Greek Salad</div>
+                                    <div class="timeline-meta">Lunch • 12:30 PM</div>
+                                </div>
+                            </div>
+
+                            <div class="timeline-date">Saturday, Feb 23</div>
+                            <div class="timeline-item">
+                                <div class="timeline-image"></div>
+                                <div class="timeline-info">
+                                    <div class="timeline-title">Pasta Carbonara</div>
+                                    <div class="timeline-meta">Dinner • 8:00 PM</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">⌂</div>
+                            <div class="nav-label">Home</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">☰</div>
+                            <div class="nav-label">Catalog</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">□</div>
+                            <div class="nav-label">Inventory</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">◐</div>
+                            <div class="nav-label">History</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">◯</div>
+                            <div class="nav-label">Profile</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 5: Profile -->
+            <div class="screen-wrapper">
+                <div class="screen-label">Profile (Settings)</div>
+                <div class="phone-container">
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span>●●●●○</span>
+                    </div>
+
+                    <div class="app-content">
+                        <div class="header-simple">
+                            <h2>Profile</h2>
+                        </div>
+
+                        <div class="section">
+                            <div class="stats-card">
+                                <div class="stats-title">My Catalog</div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                    <span style="font-size: 15px; color: var(--text-secondary);">📚 Meals in catalog</span>
+                                    <span style="font-size: 15px; color: var(--text-primary); font-weight: 600;">15</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                                    <span style="font-size: 15px; color: var(--text-secondary);">📊 Total meals logged</span>
+                                    <span style="font-size: 15px; color: var(--text-primary); font-weight: 600;">47</span>
+                                </div>
+                                <button class="meal-action">Share My Catalog</button>
+                            </div>
+                        </div>
+
+                        <div class="section" style="padding-top: 0;">
+                            <div class="category-header" style="margin-bottom: 12px;">
+                                <span>Family Sharing</span>
+                            </div>
+                            
+                            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 15px; color: var(--text-primary); font-weight: 500;">👥 Connections</span>
+                                    <span style="font-size: 14px; color: var(--text-secondary);">2</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">Mom, Dad</div>
+                            </div>
+
+                            <div style="background: var(--profile-highlight); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border-color);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 15px; color: var(--text-primary); font-weight: 500;">💡 New suggestions</span>
+                                    <span style="background: var(--gradient-start); color: #ffffff; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;">1</span>
+                                </div>
+                            </div>
+
+                            <button class="meal-action">Manage Connections</button>
+                        </div>
+
+                        <div class="section" style="padding-top: 0;">
+                            <div class="category-header" style="margin-bottom: 12px;">
+                                <span>Preferences</span>
+                            </div>
+                            
+                            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 15px; color: var(--text-primary); font-weight: 500;">🥗 Dietary Restrictions</span>
+                                <span style="font-size: 20px; color: var(--text-tertiary);">›</span>
+                            </div>
+
+                            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 15px; color: var(--text-primary); font-weight: 500;">🍽️ Meal Type Preferences</span>
+                                <span style="font-size: 20px; color: var(--text-tertiary);">›</span>
+                            </div>
+
+                            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 15px; color: var(--text-primary); font-weight: 500;">🔔 Notifications</span>
+                                <span style="font-size: 20px; color: var(--text-tertiary);">›</span>
+                            </div>
+                        </div>
+
+                        <div class="section" style="padding-top: 0; padding-bottom: 40px;">
+                            <div class="category-header" style="margin-bottom: 12px;">
+                                <span>About</span>
+                            </div>
+                            
+                            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 15px; color: var(--text-primary); font-weight: 500;">❓ Help & FAQ</span>
+                                <span style="font-size: 20px; color: var(--text-tertiary);">›</span>
+                            </div>
+
+                            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 15px; color: var(--text-primary); font-weight: 500;">💬 Send Feedback</span>
+                                <span style="font-size: 20px; color: var(--text-tertiary);">›</span>
+                            </div>
+
+                            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 15px; color: var(--text-primary); font-weight: 500;">🔒 Privacy Policy</span>
+                                <span style="font-size: 20px; color: var(--text-tertiary);">›</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">⌂</div>
+                            <div class="nav-label">Home</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">☰</div>
+                            <div class="nav-label">Catalog</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">□</div>
+                            <div class="nav-label">Inventory</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">◐</div>
+                            <div class="nav-label">History</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">◯</div>
+                            <div class="nav-label">Profile</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+           
+
+        </div>
+    </div>
+</body>
+</html>

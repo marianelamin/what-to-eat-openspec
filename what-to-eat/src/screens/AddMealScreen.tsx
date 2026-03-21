@@ -9,7 +9,7 @@ import {
   StyleSheet,
   useColorScheme,
 } from 'react-native';
-import { Text, TextInput, Button, HelperText } from 'react-native-paper';
+import { Text, TextInput, Button, HelperText, Chip } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -24,6 +24,7 @@ export function AddMealScreen() {
   const [name, setName] = useState('');
   const [ingredients, setIngredients] = useState('');
   const [recipe, setRecipe] = useState('');
+  const [mealType, setMealType] = useState<'all_day' | 'breakfast'>('all_day');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [nameError, setNameError] = useState('');
@@ -75,6 +76,7 @@ export function AddMealScreen() {
         recipe: recipe.trim() || undefined,
         photo_url: photoUrl,
         ingredients: ingredientLines,
+        meal_type: mealType,
       });
 
       navigation.goBack();
@@ -113,6 +115,25 @@ export function AddMealScreen() {
             </View>
           )}
         </TouchableOpacity>
+
+        <View style={[styles.chipRow, styles.input]}>
+          <Chip
+            selected={mealType === 'breakfast'}
+            onPress={() => setMealType('breakfast')}
+            showSelectedOverlay
+            style={styles.typeChip}
+          >
+            Breakfast
+          </Chip>
+          <Chip
+            selected={mealType === 'all_day'}
+            onPress={() => setMealType('all_day')}
+            showSelectedOverlay
+            style={styles.typeChip}
+          >
+            All Day
+          </Chip>
+        </View>
 
         <TextInput
           label="Meal name *"
@@ -167,6 +188,8 @@ export function AddMealScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 40 },
+  chipRow: { flexDirection: 'row', gap: 8 },
+  typeChip: { },
   photoArea: {
     width: '100%',
     height: 200,

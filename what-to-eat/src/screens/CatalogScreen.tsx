@@ -8,10 +8,11 @@ import {
   Dimensions,
   useColorScheme,
   Alert,
+  ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { Text, Searchbar, FAB, ActivityIndicator } from 'react-native-paper';
+import { Text, Searchbar, FAB, ActivityIndicator, Chip } from 'react-native-paper';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -25,6 +26,11 @@ type NavProp = NativeStackNavigationProp<CatalogStackParamList, 'CatalogList'>;
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48) / 2;
+
+const MEAL_TYPE_CHIPS: { value: 'breakfast' | 'all_day'; label: string }[] = [
+  { value: 'breakfast', label: 'Breakfast' },
+  { value: 'all_day', label: 'All Day' },
+];
 
 function MealCard({
   meal,
@@ -87,6 +93,8 @@ export function CatalogScreen() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [activeTab, setActiveTab] = useState<'all_day' | 'breakfast'>('all_day');
   const [fabOpen, setFabOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState('');
@@ -128,6 +136,12 @@ export function CatalogScreen() {
 
   function handleScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+  }
+
+  function handleTabChange(tab: 'all_day' | 'breakfast') {
+    setActiveTab(tab);
+    setSearch('');
+    scrollOffsetRef.current = 0;
   }
 
   async function handleBulkImport() {
@@ -184,9 +198,10 @@ export function CatalogScreen() {
     }
   }
 
+  const tabFiltered = meals.filter((m) => m.meal_type === activeTab);
   const filtered = search.trim()
-    ? meals.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
-    : meals;
+    ? tabFiltered.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
+    : tabFiltered;
 
   const accentColor = colorScheme === 'dark' ? '#d97706' : '#f59e0b';
 
@@ -200,12 +215,37 @@ export function CatalogScreen() {
 
   return (
     <View style={styles.container}>
-      <Searchbar
-        placeholder="Search meals..."
-        value={search}
-        onChangeText={setSearch}
-        style={styles.searchbar}
-      />
+      <View style={styles.headerRow}>
+        {!searchFocused && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.chipScroll}
+            contentContainerStyle={styles.chipContent}
+          >
+            {MEAL_TYPE_CHIPS.map((chip) => (
+              <Chip
+                key={chip.value}
+                selected={activeTab === chip.value}
+                onPress={() => handleTabChange(chip.value)}
+                style={styles.chip}
+                showSelectedOverlay
+              >
+                {chip.label}
+              </Chip>
+            ))}
+          </ScrollView>
+        )}
+        <Searchbar
+          placeholder="Search..."
+          value={search}
+          onChangeText={setSearch}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+          style={[styles.searchbar, searchFocused && styles.searchbarExpanded]}
+        />
+      </View>
+
       <FlatList
         ref={flatListRef}
         data={filtered}
@@ -270,7 +310,18 @@ export function CatalogScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  searchbar: { margin: 16, marginBottom: 8 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  chipScroll: { flex: 1 },
+  chipContent: { gap: 8, paddingRight: 4 },
+  chip: { },
+  searchbar: { flex: 0, width: 120 },
+  searchbarExpanded: { flex: 1, width: undefined },
   grid: { paddingHorizontal: 16, paddingBottom: 80 },
   row: { justifyContent: 'space-between', marginBottom: 16 },
   card: {

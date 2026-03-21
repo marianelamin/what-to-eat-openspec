@@ -33,21 +33,35 @@ The `meals` table has no category/type column today. We need a data model change
 
 **Why:** The safer default — existing meals don't lose visibility. Users can reclassify breakfast items manually.
 
-### 3. Catalog UI: tabs vs. segmented control
+### 3. Catalog UI: combined row with scrollable chips + expandable search
 
-**Decision:** Use a segmented control (two-button toggle) rendered above the search bar, switching between **Breakfast** and **All Day**.
+**Decision:** The type filter and search live in a single row. The left side is a horizontally scrollable list of `Chip`-style buttons (Breakfast first, then All Day). The right side is a compact search icon/field. When the user focuses search, the chips slide out and the search bar expands to fill the full row. Chips return when search blurs.
 
-**Why:** A segmented control with two options is visually lighter than full tabs and stays within the existing layout (search bar + grid) without adding a new navigation layer. React Native Paper's `SegmentedButtons` component fits naturally.
+**Tab order:** Breakfast on the left, All Day on the right.
+
+**Why chips instead of SegmentedButtons:** `SegmentedButtons` is fixed-width and cannot scroll. A horizontal `ScrollView` with `Chip` components (already used in inventory edit modal) is future-ready — adding "Meal Prep" or other types later requires no layout changes.
+
+**Why single row:** Saves vertical real estate. The catalog is photo-dominant; every pixel of grid height matters.
+
+**Why conditional render (not animation) for search expand:** Simpler to implement, no `Animated.Value` needed. The instant swap feels clean and calm, matching the app's aesthetic.
 
 **Alternative considered:** Full tab bar (React Navigation tabs). Rejected — adds another navigation layer and would require restructuring the catalog stack.
 
-### 4. Active tab state persistence
+**Alternative considered:** Keep chips and search on separate rows. Rejected — wastes vertical space.
+
+### 4. Search expand/collapse behavior
+
+**Decision:** Search expands to full row width on focus. Chips are hidden (not rendered) while search is active. On blur, chips reappear and search collapses back to its compact form. Search text is preserved on blur — it clears only when the user explicitly clears it or switches tabs.
+
+**Why:** Blur is the most natural collapse trigger. Preserving the query on blur lets the user dismiss the keyboard while still seeing filtered results.
+
+### 5. Active tab state persistence
 
 **Decision:** Tab selection is in-memory state (`useState`), not persisted to AsyncStorage.
 
 **Why:** It resets on app restart, which is fine — the user can quickly re-select. No complexity needed for a personal app.
 
-### 5. Search scope
+### 6. Search scope
 
 **Decision:** Search filters within the active tab only.
 

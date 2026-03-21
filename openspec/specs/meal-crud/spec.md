@@ -1,11 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: Add a new meal
-The system SHALL allow the authenticated user to create a new meal with a photo, a required name, optional ingredients, and optional notes.
+The system SHALL allow the authenticated user to create a new meal with a photo, a required name, a meal type (Breakfast or All Day), optional ingredients, and optional notes. The meal type field SHALL default to All Day.
 
 #### Scenario: Save a complete meal
-- **WHEN** the user fills in a meal name, optionally picks a photo and enters ingredients, and taps Save
-- **THEN** the system saves the meal to Supabase (with uploaded photo URL if a photo was chosen) and navigates back to the catalog
+- **WHEN** the user fills in a meal name, selects a meal type, optionally picks a photo and enters ingredients, and taps Save
+- **THEN** the system saves the meal to Supabase (with the selected meal type) and navigates back to the catalog
 
 #### Scenario: Name is required
 - **WHEN** the user taps Save without entering a meal name
@@ -46,11 +46,11 @@ The system SHALL display a loading indicator while saving and an error message i
 - **THEN** the system displays an error message and remains on the Add Meal screen
 
 ### Requirement: Edit an existing meal
-The system SHALL allow the authenticated user to edit a meal's name, photo, ingredients, and recipe notes from the Meal Detail screen.
+The system SHALL allow the authenticated user to edit a meal's name, photo, meal type, ingredients, and recipe notes from the Meal Detail screen.
 
 #### Scenario: Enter edit mode
 - **WHEN** the user taps the "Edit" button on the Meal Detail screen
-- **THEN** the screen switches to edit mode with editable fields for name, photo, ingredients (as multiline text), and recipe notes
+- **THEN** the screen switches to edit mode with editable fields for name, photo, meal type, ingredients (as multiline text), and recipe notes
 
 #### Scenario: Save edits successfully
 - **WHEN** the user modifies fields and taps Save

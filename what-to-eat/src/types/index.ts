@@ -23,6 +23,7 @@ export type Meal = {
   has_vegetables: boolean;
   has_fruit: boolean;
   has_grains: boolean;
+  meal_type: 'breakfast' | 'all_day';
   is_archived: boolean;
   created_at: string;
   last_made_at: string | null;

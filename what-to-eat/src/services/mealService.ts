@@ -36,6 +36,7 @@ type CreateMealInput = {
   recipe?: string;
   photo_url?: string;
   ingredients: string[];
+  meal_type?: 'breakfast' | 'all_day';
 };
 
 export async function createMeal(input: CreateMealInput): Promise<Meal> {
@@ -50,6 +51,7 @@ export async function createMeal(input: CreateMealInput): Promise<Meal> {
       name: input.name,
       recipe: input.recipe || null,
       photo_url: input.photo_url || null,
+      meal_type: input.meal_type ?? 'all_day',
     })
     .select()
     .single();
@@ -151,6 +153,7 @@ type UpdateMealInput = {
   recipe?: string | null;
   photo_url?: string | null;
   ingredients?: string[];
+  meal_type?: 'breakfast' | 'all_day';
 };
 
 export async function updateMeal(id: string, input: UpdateMealInput): Promise<void> {
@@ -158,6 +161,7 @@ export async function updateMeal(id: string, input: UpdateMealInput): Promise<vo
   if (input.name !== undefined) updates.name = input.name;
   if (input.recipe !== undefined) updates.recipe = input.recipe;
   if (input.photo_url !== undefined) updates.photo_url = input.photo_url;
+  if (input.meal_type !== undefined) updates.meal_type = input.meal_type;
 
   if (Object.keys(updates).length > 0) {
     const { error } = await supabase.from('meals').update(updates).eq('id', id);

@@ -1,0 +1,87 @@
+title: What To Eat — Physical Architecture {
+  near: top-center
+  shape: text
+  style.font-size: 20
+  style.bold: true
+}
+
+# ── Device ───────────────────────────────────────────────────
+device: iPhone (Expo Go / Standalone) {
+  style.fill: "#f8fafc"
+  style.stroke: "#64748b"
+
+  rn: React Native + Expo SDK 54 {
+    style.fill: "#eff6ff"
+    style.stroke: "#3b82f6"
+
+    app: App.tsx (entry point)
+    nav_lib: React Navigation 6
+    ui_lib: React Native Paper
+    icons: MaterialCommunityIcons (Expo Vector Icons)
+    img_picker: expo-image-picker
+    safe_area: react-native-safe-area-context
+
+    app -> nav_lib: mounts
+    nav_lib -> ui_lib
+  }
+
+  ts: TypeScript (strict) {shape: page}
+  metro: Metro Bundler {shape: page}
+
+  metro -> rn
+}
+
+# ── Supabase Cloud ───────────────────────────────────────────
+supabase: Supabase (hosted) {
+  style.fill: "#f0fdf4"
+  style.stroke: "#16a34a"
+
+  pg: PostgreSQL {
+    shape: cylinder
+    label: "PostgreSQL\n\nTables:\n• meals (meal_type, is_archived…)\n• meal_ingredients\n• inventory_items\n• meal_log\n• users (via auth)"
+  }
+
+  storage: Object Storage {
+    shape: cylinder
+    label: "Object Storage\n\nBuckets:\n• meal-photos/{user_id}/"
+  }
+
+  auth: Auth Service {
+    label: "Auth Service\n(email + password)\nJWT sessions"
+  }
+
+  rls: Row-Level Security {
+    shape: page
+    label: "RLS Policies\n(user_id = auth.uid())"
+  }
+
+  pg -> rls: enforces
+  auth -> pg: auth.uid() context
+}
+
+# ── SDK / Network ────────────────────────────────────────────
+sdk: "@supabase/supabase-js" {
+  shape: package
+  label: "@supabase/supabase-js\n(REST + Realtime + Storage)"
+}
+
+# ── Environment ──────────────────────────────────────────────
+env: .env (device-local) {
+  shape: page
+  label: ".env\nSUPABASE_URL\nSUPABASE_PUBLISHABLE_KEY"
+}
+
+# ── Connections ──────────────────────────────────────────────
+device.rn.app -> sdk: imports supabase client
+env -> sdk: injects URL + anon key at build time
+sdk -> supabase.auth: HTTPS (email/password, JWT refresh)
+sdk -> supabase.pg: HTTPS REST (CRUD, filtered by RLS)
+sdk -> supabase.storage: HTTPS multipart (photo upload)
+
+# ── CDN note ─────────────────────────────────────────────────
+cdn: Supabase CDN {
+  shape: cloud
+  label: "Supabase CDN\n(photo serving)"
+}
+supabase.storage -> cdn: serves photo_url
+device.rn -> cdn: Image loads photo_url

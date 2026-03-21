@@ -12,7 +12,7 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { Text, ActivityIndicator, Divider, Button, TextInput } from 'react-native-paper';
+import { Text, ActivityIndicator, Divider, Button, TextInput, Chip } from 'react-native-paper';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -68,6 +68,7 @@ function MealPage({
   const [editName, setEditName] = useState('');
   const [editRecipe, setEditRecipe] = useState('');
   const [editIngredients, setEditIngredients] = useState('');
+  const [editMealType, setEditMealType] = useState<'all_day' | 'breakfast'>('all_day');
   const [editPhotoUri, setEditPhotoUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [actioning, setActioning] = useState(false);
@@ -87,6 +88,7 @@ function MealPage({
     setEditName(meal.name);
     setEditRecipe(meal.recipe ?? '');
     setEditIngredients(ingredients.map((i) => i.ingredient_name).join('\n'));
+    setEditMealType(meal.meal_type ?? 'all_day');
     setEditPhotoUri(null);
     setIsEditing(true);
     onEditingChange(true);
@@ -130,6 +132,7 @@ function MealPage({
         recipe: editRecipe.trim() || null,
         photo_url,
         ingredients: ingLines,
+        meal_type: editMealType,
       });
       const updatedMeal = { ...meal, name: trimmedName, recipe: editRecipe.trim() || null, photo_url };
       setMeal(updatedMeal);
@@ -295,6 +298,26 @@ function MealPage({
           )}
 
           {loading && <ActivityIndicator style={styles.loader} />}
+
+          {/* Meal type */}
+          {isEditing && (
+            <View style={[styles.chipRow, styles.editInput]}>
+              <Chip
+                selected={editMealType === 'breakfast'}
+                onPress={() => setEditMealType('breakfast')}
+                showSelectedOverlay
+              >
+                Breakfast
+              </Chip>
+              <Chip
+                selected={editMealType === 'all_day'}
+                onPress={() => setEditMealType('all_day')}
+                showSelectedOverlay
+              >
+                All Day
+              </Chip>
+            </View>
+          )}
 
           {/* Ingredients */}
           {isEditing ? (
@@ -506,6 +529,7 @@ const styles = StyleSheet.create({
   availabilityLabel: { fontSize: 11, fontWeight: '600', marginLeft: 6 },
   recipe: { lineHeight: 22 },
   loader: { marginTop: 16 },
+  chipRow: { flexDirection: 'row', gap: 8 },
   actions: { marginTop: 8, gap: 10 },
   actionBtn: {},
 });

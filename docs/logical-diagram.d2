@@ -1,0 +1,108 @@
+title: What To Eat — Logical Architecture {
+  near: top-center
+  shape: text
+  style.font-size: 20
+  style.bold: true
+}
+
+# ── Auth Layer ──────────────────────────────────────────────
+auth: Auth Layer {
+  style.fill: "#fef3c7"
+  style.stroke: "#d97706"
+
+  signin: Sign In Screen
+  signup: Sign Up Screen
+  context: Auth Context (session state)
+
+  signin -> context: sets session
+  signup -> context: sets session
+}
+
+# ── App Shell ────────────────────────────────────────────────
+shell: App Shell {
+  style.fill: "#f0fdf4"
+  style.stroke: "#16a34a"
+
+  nav: Bottom Tab Navigator
+  home: Home Tab
+  catalog_nav: Catalog Stack
+  inventory: Inventory Tab
+  history: History Tab
+  profile: Profile Tab
+
+  nav -> home
+  nav -> catalog_nav
+  nav -> inventory
+  nav -> history
+  nav -> profile
+}
+
+# ── Catalog Stack ────────────────────────────────────────────
+catalog_stack: Catalog Stack {
+  style.fill: "#eff6ff"
+  style.stroke: "#3b82f6"
+
+  list: Catalog Screen {
+    shape: rectangle
+    label: "Catalog Screen\n(chip filter + search + grid)"
+  }
+  detail: Meal Detail Screen {
+    shape: rectangle
+    label: "Meal Detail Screen\n(gallery pager)"
+  }
+  add: Add Meal Screen {
+    shape: rectangle
+  }
+
+  list -> detail: "navigate (meals[], index)"
+  list -> add: navigate
+}
+
+# ── Services ─────────────────────────────────────────────────
+services: Services {
+  style.fill: "#faf5ff"
+  style.stroke: "#7c3aed"
+
+  meal_svc: mealService {
+    label: "mealService\nfetchAllMeals, createMeal\nupdateMeal, logMeal\narchiveMeal, restoreMeal\ndeleteMeal, uploadMealPhoto"
+  }
+  inv_svc: inventoryService {
+    label: "inventoryService\nfetchInventory\nbulkAddItems (dedup)\nupdateItem, deleteItem"
+  }
+  rec_svc: recommendationService {
+    label: "recommendationService\ngetRecommendations"
+  }
+  supabase: supabase client {
+    shape: cylinder
+  }
+
+  meal_svc -> supabase
+  inv_svc -> supabase
+  rec_svc -> supabase
+}
+
+# ── External ─────────────────────────────────────────────────
+supabase_cloud: Supabase Cloud {
+  style.fill: "#f0fdf4"
+  style.stroke: "#16a34a"
+
+  db: PostgreSQL {shape: cylinder}
+  storage: Storage (photos) {shape: cylinder}
+  auth_svc: Auth Service
+}
+
+# ── Screen → Service wiring ──────────────────────────────────
+shell.catalog_nav -> services.meal_svc: fetchAllMeals, logMeal
+shell.inventory -> services.inv_svc: fetchInventory, bulkAddItems
+shell.home -> services.rec_svc: getRecommendations
+catalog_stack.list -> services.meal_svc
+catalog_stack.detail -> services.meal_svc
+catalog_stack.add -> services.meal_svc
+catalog_stack.detail -> services.inv_svc: fetchInventory (ingredient availability)
+
+# ── Service → Cloud ──────────────────────────────────────────
+services.supabase -> supabase_cloud.db: queries (RLS)
+services.supabase -> supabase_cloud.storage: photo upload/read
+services.supabase -> supabase_cloud.auth_svc: session
+
+auth.context -> shell.nav: gates access

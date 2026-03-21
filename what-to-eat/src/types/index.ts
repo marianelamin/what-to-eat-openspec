@@ -11,3 +11,46 @@ export type AuthContextType = AuthState & {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
+
+export type Meal = {
+  id: string;
+  user_id: string;
+  name: string;
+  photo_url: string | null;
+  recipe: string | null;
+  time_category: string | null;
+  has_protein: boolean;
+  has_vegetables: boolean;
+  has_fruit: boolean;
+  has_grains: boolean;
+  is_archived: boolean;
+  created_at: string;
+  last_made_at: string | null;
+  times_made: number;
+};
+
+export type MealIngredient = {
+  id: string;
+  meal_id: string;
+  ingredient_name: string;
+  quantity: string | null;
+  created_at: string;
+};
+
+export type InventoryItem = {
+  id: string;
+  user_id: string;
+  name: string;
+  quantity: string | null;
+  category: string | null;
+  added_at: string;
+  updated_at: string;
+};
+
+export type ScoredMeal = Meal & {
+  ingredients: MealIngredient[];
+  matchedIngredients: string[];
+  missingIngredients: string[];
+  score: number;
+  daysSinceLastMade: number;
+};

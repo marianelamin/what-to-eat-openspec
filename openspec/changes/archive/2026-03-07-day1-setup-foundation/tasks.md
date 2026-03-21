@@ -43,7 +43,7 @@
 
 ## 7. Verification (depends on: Groups 5 + 6)
 
-- [ ] 7.1 Verify app runs on iOS device via Expo Go
+- [x] 7.1 Verify app runs on iOS device via Expo Go
 - [x] 7.2 Test sign-up, sign-in, sign-out flows end-to-end
 - [x] 7.3 Verify all 5 tabs render and switch correctly
 - [x] 7.4 Confirm theme (accent color, light/dark mode) applies across all screens

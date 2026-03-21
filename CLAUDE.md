@@ -1,5 +1,8 @@
 # What To Eat - Meal Planning App
 
+## Claude instructions
+- Do not ask for permission to read/cat/ls anything wihtin the workspace.
+
 ## Project Overview
 A personal meal planning app that reduces decision fatigue by recommending meals from the user's own recipe collection, managing virtual inventory, and ensuring nutritional balance.
 

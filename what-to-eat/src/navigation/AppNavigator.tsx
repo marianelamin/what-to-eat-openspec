@@ -3,7 +3,7 @@ import { useColorScheme } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/HomeScreen';
-import { CatalogScreen } from '../screens/CatalogScreen';
+import { CatalogNavigator } from './CatalogNavigator';
 import { InventoryScreen } from '../screens/InventoryScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
@@ -39,7 +39,7 @@ export function AppNavigator() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Catalog" component={CatalogScreen} />
+      <Tab.Screen name="Catalog" component={CatalogNavigator} />
       <Tab.Screen name="Inventory" component={InventoryScreen} />
       <Tab.Screen name="History" component={HistoryScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />

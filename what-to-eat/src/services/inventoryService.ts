@@ -19,6 +19,36 @@ function categorize(name: string): string {
   return 'Other';
 }
 
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function findNearDuplicate(candidate: string, existing: InventoryItem[]): InventoryItem | undefined {
+  const c = candidate.toLowerCase().trim();
+  return existing.find((item) => {
+    const e = item.name.toLowerCase().trim();
+    if (c === e) return true;
+    // plural/singular: one is the other + trailing "s" or "es"
+    if (c === e + 's' || e === c + 's') return true;
+    if (c === e + 'es' || e === c + 'es') return true;
+    // 1-character typo — only for names >= 4 chars
+    if (c.length >= 4 && e.length >= 4 && levenshtein(c, e) <= 1) return true;
+    return false;
+  });
+}
+
 export async function fetchInventory(): Promise<InventoryItem[]> {
   const { data, error } = await supabase
     .from('inventory_items')
@@ -30,19 +60,33 @@ export async function fetchInventory(): Promise<InventoryItem[]> {
   return data ?? [];
 }
 
-export async function bulkAddItems(names: string[]): Promise<void> {
+export async function bulkAddItems(names: string[]): Promise<{ inserted: number; stocked: number }> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
-  const rows = names.map((name) => ({
-    user_id: user.id,
-    name: name.trim(),
-    quantity: '6',
-    category: categorize(name),
-  }));
+  const existing = await fetchInventory();
 
-  const { error } = await supabase.from('inventory_items').insert(rows);
-  if (error) throw error;
+  let inserted = 0;
+  let stocked = 0;
+
+  for (const name of names) {
+    const match = findNearDuplicate(name, existing);
+    if (match) {
+      await updateItem(match.id, { quantity: '6' });
+      stocked++;
+    } else {
+      const { error } = await supabase.from('inventory_items').insert({
+        user_id: user.id,
+        name: name.trim(),
+        quantity: '6',
+        category: categorize(name),
+      });
+      if (error) throw error;
+      inserted++;
+    }
+  }
+
+  return { inserted, stocked };
 }
 
 export async function updateItem(

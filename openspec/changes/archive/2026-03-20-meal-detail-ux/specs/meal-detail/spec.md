@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: View meal detail
 The system SHALL display a meal detail screen for a meal showing its photo, name, ingredients with availability status, and notes. Active meals SHALL show Choose This Meal, Edit, and Archive actions. Archived meals SHALL show Restore and Delete Permanently actions instead.
@@ -23,12 +23,7 @@ The system SHALL display a meal detail screen for a meal showing its photo, name
 - **WHEN** the user opens a meal that has no notes
 - **THEN** the notes section is hidden or shows an empty state
 
-### Requirement: Navigate back from meal detail
-The system SHALL allow the user to navigate back to the catalog from the meal detail screen. The catalog SHALL restore its scroll position to where it was before the user tapped into the detail view.
-
-#### Scenario: Back navigation restores catalog scroll
-- **WHEN** the user taps the back button on the meal detail screen
-- **THEN** the system navigates back to the catalog grid, which is scrolled to the position it was at before the user opened the meal
+## MODIFIED Requirements
 
 ### Requirement: Restore archived meal
 The system SHALL restore an archived meal to active status immediately when the user taps Restore, without requiring a confirmation dialog.

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { Button, Chip, FAB, HelperText, Text, TextInput } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   bulkAddItems,
@@ -115,9 +116,11 @@ export function InventoryScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
 
   async function handleBadgeTap(inv: InventoryItem) {
     const next = nextLevel(inv.quantity);
@@ -155,10 +158,13 @@ export function InventoryScreen() {
     setQuickAddError('');
     setQuickAddSaving(true);
     try {
-      await bulkAddItems(names);
+      const { stocked } = await bulkAddItems(names);
       setQuickAddText('');
       setQuickAddVisible(false);
       await load();
+      if (stocked > 0) {
+        Alert.alert('', `${stocked} item${stocked !== 1 ? 's' : ''} already in inventory — marked as stocked.`);
+      }
     } catch {
       setQuickAddError('Failed to save items. Please try again.');
     } finally {
@@ -196,21 +202,16 @@ export function InventoryScreen() {
   }
 
   async function handleDelete(item: InventoryItem) {
-    Alert.alert('Delete Item', `Remove "${item.name}" from inventory?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteItem(item.id);
-            await load();
-          } catch {
-            Alert.alert('Error', 'Failed to delete item.');
-          }
-        },
-      },
-    ]);
+    setItems((current) => current.filter((i) => i.id !== item.id));
+    try {
+      await deleteItem(item.id);
+    } catch {
+      setItems((current) => {
+        const existing = current.find((i) => i.id === item.id);
+        return existing ? current : [...current, item];
+      });
+      Alert.alert('Error', 'Failed to delete item.');
+    }
   }
 
   const grouped = groupByCategory(items);

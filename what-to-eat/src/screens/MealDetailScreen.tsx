@@ -25,8 +25,19 @@ import {
   updateMeal,
   uploadMealPhoto,
 } from '../services/mealService';
+import { fetchInventory } from '../services/inventoryService';
 import { supabase } from '../services/supabase';
-import { Meal, MealIngredient } from '../types';
+import { Meal, MealIngredient, InventoryItem } from '../types';
+
+function isAvailable(ingredientName: string, inventory: InventoryItem[]): boolean {
+  const ing = ingredientName.toLowerCase();
+  return inventory.some((item) => {
+    const n = parseInt(item.quantity ?? '', 10);
+    if (!isNaN(n) && n <= 0) return false;
+    const inv = item.name.toLowerCase();
+    return inv.includes(ing) || ing.includes(inv);
+  });
+}
 import { CatalogStackParamList } from '../navigation/CatalogNavigator';
 
 type MealDetailRouteProp = RouteProp<CatalogStackParamList, 'MealDetail'>;
@@ -50,6 +61,7 @@ function MealPage({
 
   const [meal, setMeal] = useState<Meal>(initialMeal);
   const [ingredients, setIngredients] = useState<MealIngredient[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -62,8 +74,11 @@ function MealPage({
 
   useEffect(() => {
     setLoading(true);
-    fetchMealWithIngredients(initialMeal.id)
-      .then(({ ingredients: ing }) => setIngredients(ing))
+    Promise.all([fetchMealWithIngredients(initialMeal.id), fetchInventory()])
+      .then(([{ ingredients: ing }, inv]) => {
+        setIngredients(ing);
+        setInventory(inv);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [initialMeal.id]);
@@ -185,29 +200,17 @@ function MealPage({
     );
   }
 
-  function handleRestore() {
-    Alert.alert(
-      'Restore this meal?',
-      'This meal will be returned to your active catalog.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Restore',
-          onPress: async () => {
-            setActioning(true);
-            try {
-              await restoreMeal(meal.id);
-              onMealMutated?.();
-              navigation.goBack();
-            } catch {
-              Alert.alert('Error', 'Failed to restore meal. Please try again.');
-            } finally {
-              setActioning(false);
-            }
-          },
-        },
-      ]
-    );
+  async function handleRestore() {
+    setActioning(true);
+    try {
+      await restoreMeal(meal.id);
+      onMealMutated?.();
+      navigation.goBack();
+    } catch {
+      Alert.alert('Error', 'Failed to restore meal. Please try again.');
+    } finally {
+      setActioning(false);
+    }
   }
 
   function handleDeletePermanently() {
@@ -309,11 +312,20 @@ function MealPage({
               <View style={styles.section}>
                 <Text variant="titleSmall" style={styles.sectionTitle}>Ingredients</Text>
                 <Divider style={styles.divider} />
-                {ingredients.map((ing) => (
-                  <Text key={ing.id} variant="bodyMedium" style={styles.ingredient}>
-                    • {ing.ingredient_name}{ing.quantity ? ` — ${ing.quantity}` : ''}
-                  </Text>
-                ))}
+                {ingredients.map((ing) => {
+                  const have = isAvailable(ing.ingredient_name, inventory);
+                  return (
+                    <View key={ing.id} style={styles.ingredientRow}>
+                      <View style={[styles.ingredientDot, { backgroundColor: have ? '#16a34a' : '#a8a29e' }]} />
+                      <Text variant="bodyMedium" style={styles.ingredient}>
+                        {ing.ingredient_name}{ing.quantity ? ` — ${ing.quantity}` : ''}
+                      </Text>
+                      <Text style={[styles.availabilityLabel, { color: have ? '#16a34a' : '#a8a29e' }]}>
+                        {have ? 'have' : 'missing'}
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
             )
           )}
@@ -488,7 +500,10 @@ const styles = StyleSheet.create({
   section: { marginBottom: 20 },
   sectionTitle: { opacity: 0.6, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
   divider: { marginBottom: 12 },
-  ingredient: { marginBottom: 4 },
+  ingredientRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  ingredientDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+  ingredient: { flex: 1 },
+  availabilityLabel: { fontSize: 11, fontWeight: '600', marginLeft: 6 },
   recipe: { lineHeight: 22 },
   loader: { marginTop: 16 },
   actions: { marginTop: 8, gap: 10 },

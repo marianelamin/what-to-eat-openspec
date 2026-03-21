@@ -16,7 +16,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { fetchAllMeals, createMeal, uploadMealPhoto } from '../services/mealService';
+import { fetchAllMeals, createMeal, uploadMealPhoto, logMeal } from '../services/mealService';
 import { supabase } from '../services/supabase';
 import { Meal } from '../types';
 import { CatalogStackParamList } from '../navigation/CatalogNavigator';
@@ -26,7 +26,17 @@ type NavProp = NativeStackNavigationProp<CatalogStackParamList, 'CatalogList'>;
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48) / 2;
 
-function MealCard({ meal, onPress }: { meal: Meal; onPress: () => void }) {
+function MealCard({
+  meal,
+  onPress,
+  onQuickLog,
+  isLogging,
+}: {
+  meal: Meal;
+  onPress: () => void;
+  onQuickLog: () => void;
+  isLogging: boolean;
+}) {
   const colorScheme = useColorScheme();
   const placeholderBg = colorScheme === 'dark' ? '#292524' : '#e7e5e4';
 
@@ -48,6 +58,20 @@ function MealCard({ meal, onPress }: { meal: Meal; onPress: () => void }) {
           <Text style={styles.archivedBadgeText}>Archived</Text>
         </View>
       )}
+      {!meal.is_archived && (
+        <TouchableOpacity
+          style={styles.quickLogBtn}
+          onPress={(e) => { e.stopPropagation(); onQuickLog(); }}
+          disabled={isLogging}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          {isLogging ? (
+            <ActivityIndicator size={14} color="#fff" />
+          ) : (
+            <MaterialCommunityIcons name="check" size={16} color="#fff" />
+          )}
+        </TouchableOpacity>
+      )}
       <View style={styles.cardLabel}>
         <Text variant="labelMedium" numberOfLines={2} style={styles.cardName}>
           {meal.name}
@@ -66,6 +90,7 @@ export function CatalogScreen() {
   const [fabOpen, setFabOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState('');
+  const [loggingId, setLoggingId] = useState<string | null>(null);
 
   const flatListRef = useRef<FlatList<Meal>>(null);
   const scrollOffsetRef = useRef(0);
@@ -146,6 +171,19 @@ export function CatalogScreen() {
     Alert.alert('Import complete', summary);
   }
 
+  async function handleQuickLog(meal: Meal) {
+    if (loggingId) return;
+    setLoggingId(meal.id);
+    try {
+      await logMeal(meal.id);
+      await loadMeals();
+    } catch {
+      Alert.alert('Error', 'Failed to log meal.');
+    } finally {
+      setLoggingId(null);
+    }
+  }
+
   const filtered = search.trim()
     ? meals.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
     : meals;
@@ -193,6 +231,8 @@ export function CatalogScreen() {
               initialIndex: index,
               onMealMutated: loadMeals,
             })}
+            onQuickLog={() => handleQuickLog(item)}
+            isLogging={loggingId === item.id}
           />
         )}
       />
@@ -257,6 +297,17 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   archivedBadgeText: { color: '#fff', fontSize: 10, fontWeight: '600' },
+  quickLogBtn: {
+    position: 'absolute',
+    bottom: 40,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#f59e0b',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   emptyText: { marginTop: 12, opacity: 0.6, textAlign: 'center' },
   importOverlay: {
     ...StyleSheet.absoluteFillObject,

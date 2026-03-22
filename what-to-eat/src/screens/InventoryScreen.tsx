@@ -1,10 +1,11 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
   FlatList,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { Button, Chip, FAB, HelperText, Text, TextInput } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -56,13 +58,12 @@ function isStale(items: InventoryItem[]): boolean {
   return daysSince > STALE_DAYS;
 }
 
-function quantityLabel(q: string | null): string {
+function levelIcon(q: string | null): { name: string; color: string } {
   const n = parseInt(q ?? '', 10);
-  if (isNaN(n)) return q ?? '—';
-  if (n >= 5) return 'Stocked';
-  if (n >= 3) return 'Some';
-  if (n >= 1) return 'Low';
-  return 'Out of stock';
+  if (isNaN(n) || n === 0) return { name: 'battery-outline', color: '#a8a29e' };
+  if (n >= 5) return { name: 'battery-high', color: '#f59e0b' };
+  if (n >= 3) return { name: 'battery-medium', color: '#f59e0b' };
+  return { name: 'battery-low', color: '#f59e0b' };
 }
 
 type GroupedSection = { category: string; items: InventoryItem[] };
@@ -75,6 +76,76 @@ function groupByCategory(items: InventoryItem[]): GroupedSection[] {
     map.get(cat)!.push(item);
   }
   return CATEGORIES.filter((c) => map.has(c)).map((c) => ({ category: c, items: map.get(c)! }));
+}
+
+function SwipeableRow({
+  id,
+  isOpen,
+  onOpen,
+  onDelete,
+  children,
+}: {
+  id: string;
+  isOpen: boolean;
+  onOpen: (id: string | null) => void;
+  onDelete: () => void;
+  children: React.ReactNode;
+}) {
+  const colorScheme = useColorScheme();
+  const bg = colorScheme === 'dark' ? '#1c1917' : '#fafaf9';
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  // Keep refs fresh for use inside panResponder (avoids stale closures)
+  const onOpenRef = useRef(onOpen);
+  useEffect(() => { onOpenRef.current = onOpen; }, [onOpen]);
+  const idRef = useRef(id);
+  useEffect(() => { idRef.current = id; }, [id]);
+
+  // Close when parent signals another row opened
+  useEffect(() => {
+    if (!isOpen) {
+      Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+    }
+  }, [isOpen]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, { dx, dy }) =>
+        Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5,
+      onPanResponderMove: (_, { dx }) => {
+        if (dx > 0) translateX.setValue(Math.min(dx, 90));
+      },
+      onPanResponderRelease: (_, { dx }) => {
+        if (dx > 60) {
+          Animated.spring(translateX, { toValue: 80, useNativeDriver: true }).start();
+          onOpenRef.current(idRef.current);
+        } else {
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+          onOpenRef.current(null);
+        }
+      },
+    })
+  ).current;
+
+  return (
+    <View style={{ overflow: 'hidden' }}>
+      <TouchableOpacity
+        style={styles.swipeDeleteBtn}
+        onPress={() => {
+          onOpen(null);
+          onDelete();
+        }}
+      >
+        <Text style={styles.swipeDeleteText}>Delete</Text>
+      </TouchableOpacity>
+      <Animated.View
+        style={{ backgroundColor: bg, transform: [{ translateX }] }}
+        {...panResponder.panHandlers}
+      >
+        {children}
+      </Animated.View>
+    </View>
+  );
 }
 
 export function InventoryScreen() {
@@ -96,8 +167,11 @@ export function InventoryScreen() {
 
   const [quickAddVisible, setQuickAddVisible] = useState(false);
   const [quickAddText, setQuickAddText] = useState('');
+  const [quickAddKind, setQuickAddKind] = useState<'ingredient' | 'meal_prep'>('ingredient');
   const [quickAddSaving, setQuickAddSaving] = useState(false);
   const [quickAddError, setQuickAddError] = useState('');
+
+  const [openRowId, setOpenRowId] = useState<string | null>(null);
 
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
   const [editName, setEditName] = useState('');
@@ -126,12 +200,10 @@ export function InventoryScreen() {
     const next = nextLevel(inv.quantity);
     const prev = inv.quantity;
 
-    // Optimistic update
     setItems((current) =>
       current.map((i) => (i.id === inv.id ? { ...i, quantity: next.value } : i))
     );
 
-    // Pulse animation
     const anim = getBadgeAnim(inv.id);
     Animated.sequence([
       Animated.timing(anim, { toValue: 0.4, duration: 80, useNativeDriver: true }),
@@ -141,7 +213,6 @@ export function InventoryScreen() {
     try {
       await updateItem(inv.id, { quantity: next.value });
     } catch {
-      // Revert on failure
       setItems((current) =>
         current.map((i) => (i.id === inv.id ? { ...i, quantity: prev } : i))
       );
@@ -158,8 +229,9 @@ export function InventoryScreen() {
     setQuickAddError('');
     setQuickAddSaving(true);
     try {
-      const { stocked } = await bulkAddItems(names);
+      const { stocked } = await bulkAddItems(names, quickAddKind);
       setQuickAddText('');
+      setQuickAddKind('ingredient');
       setQuickAddVisible(false);
       await load();
       if (stocked > 0) {
@@ -214,39 +286,45 @@ export function InventoryScreen() {
     }
   }
 
-  const grouped = groupByCategory(items);
+  const prepItems = items.filter((i) => i.item_kind === 'meal_prep');
+  const ingredientItems = items.filter((i) => i.item_kind !== 'meal_prep');
+  const grouped = groupByCategory(ingredientItems);
   const stale = isStale(items);
   const bg = isDark ? '#1c1917' : '#fafaf9';
   const surface = isDark ? '#292524' : '#ffffff';
   const border = isDark ? '#44403c' : '#e7e5e4';
   const textMuted = isDark ? '#a8a29e' : '#78716c';
 
+  const renderItemRow = (inv: InventoryItem) => {
+    const icon = levelIcon(inv.quantity);
+    return (
+      <SwipeableRow
+        key={inv.id}
+        id={inv.id}
+        isOpen={openRowId === inv.id}
+        onOpen={setOpenRowId}
+        onDelete={() => handleDelete(inv)}
+      >
+        <View style={[styles.itemRow, { borderBottomColor: border }]}>
+          <TouchableOpacity style={styles.itemInfo} onPress={() => { setOpenRowId(null); openEdit(inv); }}>
+            <Text variant="bodyLarge">{inv.name}</Text>
+          </TouchableOpacity>
+          <Animated.View style={{ opacity: getBadgeAnim(inv.id) }}>
+            <TouchableOpacity onPress={() => { setOpenRowId(null); handleBadgeTap(inv); }} style={styles.badgeBtn}>
+              <MaterialCommunityIcons name={icon.name as any} size={24} color={icon.color} />
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </SwipeableRow>
+    );
+  };
+
   const renderSection = ({ item: section }: { item: GroupedSection }) => (
     <View style={styles.section}>
       <Text variant="labelLarge" style={[styles.sectionHeader, { color: textMuted }]}>
         {section.category.toUpperCase()} ({section.items.length})
       </Text>
-      {section.items.map((inv) => (
-        <View key={inv.id} style={[styles.itemRow, { borderBottomColor: border }]}>
-          <TouchableOpacity style={styles.itemInfo} onPress={() => openEdit(inv)}>
-            <Text variant="bodyLarge">{inv.name}</Text>
-          </TouchableOpacity>
-          <View style={styles.itemActions}>
-            <Animated.View style={{ opacity: getBadgeAnim(inv.id) }}>
-              <TouchableOpacity onPress={() => handleBadgeTap(inv)} style={styles.badgeBtn}>
-                <View style={styles.levelBadge}>
-                  <Text style={[styles.levelBadgeText, { color: textMuted }]}>
-                    {quantityLabel(inv.quantity)}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-            <TouchableOpacity onPress={() => handleDelete(inv)} style={styles.actionBtn}>
-              <Text style={{ color: '#dc2626', fontSize: 13 }}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      ))}
+      {section.items.map(renderItemRow)}
     </View>
   );
 
@@ -273,7 +351,7 @@ export function InventoryScreen() {
         <View style={styles.centered}>
           <Text variant="bodyMedium" style={{ color: textMuted }}>Loading...</Text>
         </View>
-      ) : grouped.length === 0 ? (
+      ) : grouped.length === 0 && prepItems.length === 0 ? (
         <View style={styles.centered}>
           <Text variant="bodyMedium" style={{ color: textMuted, textAlign: 'center' }}>
             Tap the + button to add your ingredients.{'\n'}
@@ -285,6 +363,17 @@ export function InventoryScreen() {
           data={grouped}
           keyExtractor={(s) => s.category}
           renderItem={renderSection}
+          extraData={openRowId}
+          ListHeaderComponent={
+            prepItems.length > 0 ? (
+              <View style={styles.section}>
+                <Text variant="labelLarge" style={[styles.sectionHeader, { color: textMuted }]}>
+                  MEAL PREP ({prepItems.length})
+                </Text>
+                {prepItems.map(renderItemRow)}
+              </View>
+            ) : null
+          }
           contentContainerStyle={{ paddingBottom: 100 }}
         />
       )}
@@ -295,6 +384,7 @@ export function InventoryScreen() {
         onPress={() => {
           setQuickAddText('');
           setQuickAddError('');
+          setQuickAddKind('ingredient');
           setQuickAddVisible(true);
         }}
       />
@@ -307,6 +397,22 @@ export function InventoryScreen() {
         >
           <View style={[styles.modalSheet, { backgroundColor: surface }]}>
             <Text variant="titleLarge" style={styles.modalTitle}>Quick Add Items</Text>
+            <View style={styles.kindChips}>
+              <Chip
+                selected={quickAddKind === 'ingredient'}
+                onPress={() => setQuickAddKind('ingredient')}
+                style={styles.chip}
+              >
+                Ingredients
+              </Chip>
+              <Chip
+                selected={quickAddKind === 'meal_prep'}
+                onPress={() => setQuickAddKind('meal_prep')}
+                style={styles.chip}
+              >
+                Meal Prep
+              </Chip>
+            </View>
             <Text variant="bodySmall" style={{ color: textMuted, marginBottom: spacing.md }}>
               Type or dictate items separated by commas or new lines.{'\n'}
               Tap the mic on your keyboard to use voice.
@@ -327,7 +433,10 @@ export function InventoryScreen() {
             <View style={styles.modalButtons}>
               <Button
                 mode="outlined"
-                onPress={() => setQuickAddVisible(false)}
+                onPress={() => {
+                  setQuickAddVisible(false);
+                  setQuickAddKind('ingredient');
+                }}
                 style={styles.modalBtn}
               >
                 Cancel
@@ -439,16 +548,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   itemInfo: { flex: 1, paddingVertical: 4 },
-  itemActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  badgeBtn: { paddingVertical: 4 },
-  levelBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
-    backgroundColor: 'rgba(245,158,11,0.12)',
+  badgeBtn: { paddingHorizontal: spacing.xs, paddingVertical: 4 },
+  swipeDeleteBtn: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 80,
+    backgroundColor: '#dc2626',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  levelBadgeText: { fontSize: 12, fontWeight: '600' },
-  actionBtn: { paddingHorizontal: spacing.xs, paddingVertical: 4 },
+  swipeDeleteText: { color: '#ffffff', fontSize: 13, fontWeight: '600' },
   fab: { position: 'absolute', right: spacing.lg, backgroundColor: '#f59e0b' },
   modalOverlay: {
     flex: 1,
@@ -462,6 +573,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   modalTitle: { fontWeight: '700', marginBottom: spacing.sm },
+  kindChips: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
   quickAddInput: { minHeight: 120, marginBottom: spacing.xs },
   editInput: { marginBottom: spacing.sm },
   categoryLabel: { marginBottom: spacing.xs },

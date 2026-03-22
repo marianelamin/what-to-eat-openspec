@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Dimensions,
@@ -6,6 +6,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -63,6 +64,7 @@ function MealPage({
   const [ingredients, setIngredients] = useState<MealIngredient[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
@@ -73,16 +75,25 @@ function MealPage({
   const [saving, setSaving] = useState(false);
   const [actioning, setActioning] = useState(false);
 
+  const loadData = useCallback(async () => {
+    const [{ ingredients: ing }, inv] = await Promise.all([
+      fetchMealWithIngredients(initialMeal.id),
+      fetchInventory(),
+    ]);
+    setIngredients(ing);
+    setInventory(inv);
+  }, [initialMeal.id]);
+
   useEffect(() => {
     setLoading(true);
-    Promise.all([fetchMealWithIngredients(initialMeal.id), fetchInventory()])
-      .then(([{ ingredients: ing }, inv]) => {
-        setIngredients(ing);
-        setInventory(inv);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [initialMeal.id]);
+    loadData().catch(() => {}).finally(() => setLoading(false));
+  }, [loadData]);
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await loadData().catch(() => {});
+    setRefreshing(false);
+  }
 
   function enterEditMode() {
     setEditName(meal.name);
@@ -248,7 +259,13 @@ function MealPage({
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f59e0b" />
+        }
+      >
 
         {/* Photo */}
         {isEditing ? (

@@ -17,12 +17,20 @@ The system SHALL score all active meals using ingredient availability and recenc
 - **WHEN** no meals have a score above 50
 - **THEN** Home screen shows an empty state with prompts to update inventory or add meals
 
-### Requirement: Recommendations persist across tab switches
-The system SHALL display the same recommendations when the user navigates away from the Home tab and returns, without re-fetching.
+### Requirement: Recommendations refresh on Home tab focus
+The system SHALL re-fetch recommendations silently whenever the user navigates to the Home tab. If recommendations are already loaded, the current results SHALL remain visible during the background re-fetch — no loading spinner is shown. The spinner is only shown on the very first load when no results exist yet.
 
-#### Scenario: Navigating away and back preserves recommendations
-- **WHEN** recommendations are loaded and user switches to another tab then back
-- **THEN** the same recommendations are shown without a loading spinner
+#### Scenario: Navigating to Home after updating inventory refreshes recommendations
+- **WHEN** the user updates inventory and then navigates to the Home tab
+- **THEN** recommendations are re-fetched in the background and updated to reflect the new inventory without a loading spinner
+
+#### Scenario: First load shows spinner
+- **WHEN** the user opens the app and the Home tab has no recommendations yet
+- **THEN** a loading spinner is shown until the first fetch completes
+
+#### Scenario: Pull-to-refresh still works
+- **WHEN** user pulls down on the Home screen
+- **THEN** recommendations are re-fetched and updated (existing behavior preserved)
 
 ### Requirement: Pull-to-refresh loads new recommendations
 The system SHALL reload recommendations when the user pulls down on the Home screen.

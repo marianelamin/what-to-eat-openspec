@@ -60,7 +60,10 @@ export async function fetchInventory(): Promise<InventoryItem[]> {
   return data ?? [];
 }
 
-export async function bulkAddItems(names: string[]): Promise<{ inserted: number; stocked: number }> {
+export async function bulkAddItems(
+  names: string[],
+  itemKind: 'ingredient' | 'meal_prep' = 'ingredient'
+): Promise<{ inserted: number; stocked: number }> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
@@ -69,8 +72,10 @@ export async function bulkAddItems(names: string[]): Promise<{ inserted: number;
   let inserted = 0;
   let stocked = 0;
 
+  const existingOfKind = existing.filter((i) => i.item_kind === itemKind);
+
   for (const name of names) {
-    const match = findNearDuplicate(name, existing);
+    const match = findNearDuplicate(name, existingOfKind);
     if (match) {
       await updateItem(match.id, { quantity: '6' });
       stocked++;
@@ -80,6 +85,7 @@ export async function bulkAddItems(names: string[]): Promise<{ inserted: number;
         name: name.trim(),
         quantity: '6',
         category: categorize(name),
+        item_kind: itemKind,
       });
       if (error) throw error;
       inserted++;
@@ -91,7 +97,7 @@ export async function bulkAddItems(names: string[]): Promise<{ inserted: number;
 
 export async function updateItem(
   id: string,
-  updates: Partial<Pick<InventoryItem, 'name' | 'quantity' | 'category'>>
+  updates: Partial<Pick<InventoryItem, 'name' | 'quantity' | 'category' | 'item_kind'>>
 ): Promise<void> {
   const { error } = await supabase
     .from('inventory_items')

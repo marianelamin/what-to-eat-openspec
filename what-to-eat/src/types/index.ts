@@ -44,6 +44,7 @@ export type InventoryItem = {
   name: string;
   quantity: string | null;
   category: string | null;
+  item_kind: 'ingredient' | 'meal_prep';
   added_at: string;
   updated_at: string;
 };

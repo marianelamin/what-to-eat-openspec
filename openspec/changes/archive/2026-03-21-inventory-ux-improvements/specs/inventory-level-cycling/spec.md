@@ -1,3 +1,5 @@
+## MODIFIED Requirements
+
 ### Requirement: Tap level badge to cycle inventory level inline
 The system SHALL allow the user to tap the level icon on any inventory item row to cycle the item's level to the next value and save immediately, without opening a modal. The level SHALL be represented by a horizontal battery icon from `MaterialCommunityIcons` rather than a text label.
 

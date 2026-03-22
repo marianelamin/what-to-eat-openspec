@@ -1,5 +1,5 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useRef, useState } from 'react';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Image,
@@ -38,10 +38,13 @@ export function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [choosing, setChoosing] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const hasFetched = useRef(false);
 
-  async function load(isRefresh = false) {
-    if (isRefresh) setRefreshing(true);
+  const load = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else if (recommendations.length === 0) {
+      setLoading(true);
+    }
     setError('');
     try {
       const data = await getRecommendations();
@@ -52,14 +55,13 @@ export function HomeScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, [recommendations.length]);
 
-  useEffect(() => {
-    if (!hasFetched.current) {
-      hasFetched.current = true;
+  useFocusEffect(
+    useCallback(() => {
       load();
-    }
-  }, []);
+    }, [load])
+  );
 
   function handleChoose(meal: ScoredMeal) {
     Alert.alert(

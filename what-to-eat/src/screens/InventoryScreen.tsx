@@ -95,6 +95,11 @@ function SwipeableRow({
   const bg = colorScheme === 'dark' ? '#1c1917' : '#fafaf9';
   const translateX = useRef(new Animated.Value(0)).current;
 
+  // Tracks where the row settled after the last gesture (0 = closed, 80 = open)
+  const currentX = useRef(0);
+  // Captures currentX at the start of each gesture so moves are relative
+  const startX = useRef(0);
+
   // Keep refs fresh for use inside panResponder (avoids stale closures)
   const onOpenRef = useRef(onOpen);
   useEffect(() => { onOpenRef.current = onOpen; }, [onOpen]);
@@ -104,7 +109,9 @@ function SwipeableRow({
   // Close when parent signals another row opened
   useEffect(() => {
     if (!isOpen) {
-      Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+      Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start(() => {
+        currentX.current = 0;
+      });
     }
   }, [isOpen]);
 
@@ -112,17 +119,32 @@ function SwipeableRow({
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, { dx, dy }) =>
         Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5,
+      onPanResponderGrant: () => {
+        startX.current = currentX.current;
+      },
       onPanResponderMove: (_, { dx }) => {
-        if (dx > 0) translateX.setValue(Math.min(dx, 90));
+        const next = Math.max(0, Math.min(90, startX.current + dx));
+        translateX.setValue(next);
       },
       onPanResponderRelease: (_, { dx }) => {
-        if (dx > 60) {
-          Animated.spring(translateX, { toValue: 80, useNativeDriver: true }).start();
+        const projected = startX.current + dx;
+        if (projected > 40) {
+          Animated.spring(translateX, { toValue: 80, useNativeDriver: true }).start(() => {
+            currentX.current = 80;
+          });
           onOpenRef.current(idRef.current);
         } else {
-          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start(() => {
+            currentX.current = 0;
+          });
           onOpenRef.current(null);
         }
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start(() => {
+          currentX.current = 0;
+        });
+        onOpenRef.current(null);
       },
     })
   ).current;
@@ -321,9 +343,13 @@ export function InventoryScreen() {
 
   const renderSection = ({ item: section }: { item: GroupedSection }) => (
     <View style={styles.section}>
-      <Text variant="labelLarge" style={[styles.sectionHeader, { color: textMuted }]}>
-        {section.category.toUpperCase()} ({section.items.length})
-      </Text>
+      <TouchableOpacity activeOpacity={1} onPress={() => setOpenRowId(null)}>
+        <View>
+          <Text variant="labelLarge" style={[styles.sectionHeader, { color: textMuted }]}>
+            {section.category.toUpperCase()} ({section.items.length})
+          </Text>
+        </View>
+      </TouchableOpacity>
       {section.items.map(renderItemRow)}
     </View>
   );
@@ -364,12 +390,17 @@ export function InventoryScreen() {
           keyExtractor={(s) => s.category}
           renderItem={renderSection}
           extraData={openRowId}
+          onScrollBeginDrag={() => setOpenRowId(null)}
           ListHeaderComponent={
             prepItems.length > 0 ? (
               <View style={styles.section}>
-                <Text variant="labelLarge" style={[styles.sectionHeader, { color: textMuted }]}>
-                  MEAL PREP ({prepItems.length})
-                </Text>
+                <TouchableOpacity activeOpacity={1} onPress={() => setOpenRowId(null)}>
+                  <View>
+                    <Text variant="labelLarge" style={[styles.sectionHeader, { color: textMuted }]}>
+                      MEAL PREP ({prepItems.length})
+                    </Text>
+                  </View>
+                </TouchableOpacity>
                 {prepItems.map(renderItemRow)}
               </View>
             ) : null

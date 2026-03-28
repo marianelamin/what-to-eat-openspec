@@ -74,6 +74,12 @@ Track all specification changes, design decisions, and scope adjustments here. E
 
 ### Entries
 
+#### 2026-03-28 — Sync Specs from fix-swipeable-row-pan-responder
+**Type:** spec-change
+**Summary:** Synced delta specs from the `fix-swipeable-row-pan-responder` change into the main spec tree. Created new `inventory-swipe-row-gesture` spec (3 requirements: settled position tracking, snap on gesture termination, left swipe closes row). Added 2 requirements to `inventory-management` spec: open row closes on section header tap, open row closes on other item tap.
+**Files affected:** `openspec/specs/inventory-swipe-row-gesture/spec.md` (created), `openspec/specs/inventory-management/spec.md` (appended)
+**Trade-offs / Notes:** Delta specs from `openspec/changes/fix-swipeable-row-pan-responder/specs/` were merged verbatim. The `inventory-swipe-row-gesture` spec is a new capability area split from swipe-row concerns.
+
 #### 2026-03-06 — Auth UI Polish Deferred to Day 6/7
 **Type:** scope-change
 **Summary:** Auth screens (sign-in/sign-up) are functional but do not match the visual mockup. Polishing them to match the mockup design is deferred to the Day 6/7 polish sprint.
